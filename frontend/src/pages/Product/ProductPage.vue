@@ -47,7 +47,7 @@
             </tr>
           </thead>
           <tbody>
-            <template v-for="(product, index) in paginatedProducts" :key="product.id">
+            <template v-for="(product, index) in products" :key="product.id">
               <tr :class="{'expanded': expandedProductId === product.id}">
                 <td>{{ (currentPage - 1) * pageSize + index + 1 }}</td>
                 <td>{{ product.name }}</td>
@@ -364,6 +364,7 @@
     },
     data() {
       return {
+        totalProducts: 0,
         currentPage: 1,
         pageSize: 5,
         pageInput: 1,
@@ -438,12 +439,15 @@
     watch: {
       currentPage(val) {
         this.pageInput = val;
+        this.fetchProducts();
       },
       searchQuery() {
         this.currentPage = 1;
+        this.fetchProducts();
       },
       selectedCategory() {
         this.currentPage = 1;
+        this.fetchProducts();
       }
     },
     computed: {
@@ -453,7 +457,7 @@
         return this.filteredProducts.slice(start, end);
       },
       totalPages() {
-        return Math.ceil(this.filteredProducts.length / this.pageSize) || 1;
+        return Math.ceil(this.totalProducts / this.pageSize) || 1;
       },
       filteredProducts() {
         let filtered = this.products;
@@ -636,8 +640,16 @@
       async fetchProducts() {
         this.productsError = "";
         try {
-          const response = await api.get('/api/products');
-          this.products = response.data;
+          const response = await api.get('/api/products', {
+            params: {
+              limit: this.pageSize,
+              offset: (this.currentPage - 1) * this.pageSize,
+              search: this.searchQuery,
+              category: this.selectedCategory
+            }
+          });
+          this.products = response.data.products;
+          this.totalProducts = response.data.total;
           this.products.forEach(product => {
             this.updateProductQuantity(product.id);
           });

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
 from app.database import get_db
 from app.models.product_models import Product
@@ -6,19 +6,30 @@ from app.models.product_batch_models import ProductBatch
 from app.models.inventory_models import Inventory, TransactionTypeEnum
 from app.models.product_mapping_models import ProductMapping
 from app.schemas.product_schemas import ProductCreate, ProductUpdate, ProductRead, ProductBatchCreate, ProductBatchUpdate, ProductBatchRead
-from typing import List
+from typing import List, Optional
 
 product_router = APIRouter()
 
 
-# Get All Products and batches
 @product_router.get("/", response_model=List[ProductRead])
-def get_products(db: Session = Depends(get_db)):
-    products = db.query(Product).options(
-        joinedload(Product.batches),
-        joinedload(Product.inventory).joinedload(Inventory.batch)
-        ).all()
-    return products
+def get_products(
+    db: Session = Depends(get_db),
+    limit: Optional[int] = Query(None, ge=1),
+    offset: Optional[int] = Query(None, ge=0),
+    search: str = "",
+    category: str = ""
+):
+    query = db.query(Product)
+    if search:
+        query = query.filter(Product.name.ilike(f"%{search}%"))
+    if category:
+        query = query.filter(Product.category == category)
+    total = query.count()
+    if limit is not None and offset is not None:
+        products = query.offset(offset).limit(limit).all()
+    else:
+        products = query.all()
+    return {"products": products, "total": total}
 
 
 # Add Product
