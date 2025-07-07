@@ -79,7 +79,3 @@ class ProductRead(ProductBase):
 
     class Config:
         from_attributes = True
-
-class ProductListResponse(BaseModel):
-    products: List[ProductRead]
-    total: int
