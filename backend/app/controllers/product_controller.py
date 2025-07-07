@@ -5,13 +5,13 @@ from app.models.product_models import Product
 from app.models.product_batch_models import ProductBatch
 from app.models.inventory_models import Inventory, TransactionTypeEnum
 from app.models.product_mapping_models import ProductMapping
-from app.schemas.product_schemas import ProductCreate, ProductUpdate, ProductRead, ProductBatchCreate, ProductBatchUpdate, ProductBatchRead
+from app.schemas.product_schemas import ProductCreate, ProductListResponse, ProductUpdate, ProductRead, ProductBatchCreate, ProductBatchUpdate, ProductBatchRead
 from typing import List, Optional
 
 product_router = APIRouter()
 
 
-@product_router.get("/", response_model=List[ProductRead])
+@product_router.get("/", response_model=List[ProductListResponse])
 def get_products(
     db: Session = Depends(get_db),
     limit: Optional[int] = Query(None, ge=1),
